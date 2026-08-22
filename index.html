@@ -3,21 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control ANDE v5 Pro</title>
-    <!-- Librería para PDF -->
+    <title>Control ANDE v6 Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { margin: 0; padding: 15px; background: #f1f5f9; color: #333; }
-        
         .header-container { text-align: center; margin-bottom: 20px; }
         h1 { color: #1e293b; font-size: 1.5rem; margin: 5px 0; }
-        
-        /* Panel Global */
         .panel-global { background: #3b82f6; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .summary-item { background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; text-align: center; }
-        
+        .summary-item { background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; text-align: center; font-size: 0.9rem; }
         .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         label { display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; }
         input { width: 100%; padding: 8px; margin-top: 2px; border: 1px solid #cbd5e1; border-radius: 6px; }
@@ -30,16 +25,12 @@
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>Control ANDE v5</h1>
-    </div>
+    <div class="header-container"><h1>Control ANDE v6</h1></div>
 
-    <!-- Panel Global -->
     <div class="panel-global">
         <label style="color:white">Tarifa Global (Gs/kWh):</label>
         <input type="number" id="tarifaGlobal" value="450" oninput="actualizarTarifaGlobal()">
-        <button onclick="limpiarTodo()" style="background:#e11d48; margin-top:10px;">🧹 Limpiar todas las lecturas (Nuevo Mes)</button>
-        
+        <button onclick="limpiarTodo()" style="background:#e11d48; margin-top:10px;">🧹 Limpiar Mes (Nuevo Mes)</button>
         <div class="summary-box">
             <div class="summary-item">Alquileres: <br><span id="totalAlquiler">0</span></div>
             <div class="summary-item">Energía: <br><span id="totalEnergia">0</span></div>
@@ -70,7 +61,7 @@
                     <input type="number" id="ini${i}" placeholder="Lectura Ini" oninput="calc(${i})">
                     <input type="number" id="fin${i}" placeholder="Lectura Fin" oninput="calc(${i})">
                     <input type="hidden" id="tar${i}" value="450">
-                    <input type="number" id="tel${i}" placeholder="WhatsApp (Ej: 595981123456)" oninput="guardar(${i})">
+                    <input type="number" id="tel${i}" placeholder="WhatsApp (595981...)" oninput="guardar(${i})">
                     <div class="total" id="res${i}">0 Gs</div>
                     <button class="btn-pdf" onclick="generarPDF(${i})">📄 Generar PDF</button>
                     <button class="btn-wpp" onclick="enviarWpp(${i})">📲 WhatsApp</button>
@@ -89,7 +80,7 @@
         }
 
         function limpiarTodo() {
-            if(confirm("¿Seguro que querés limpiar todas las lecturas para un mes nuevo?")) {
+            if(confirm("¿Seguro que querés limpiar las lecturas?")) {
                 for(let i=1; i<=4; i++) {
                     document.getElementById('ini'+i).value = document.getElementById('fin'+i).value;
                     document.getElementById('fin'+i).value = '';
@@ -129,13 +120,41 @@
         function generarPDF(id) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("RECIBO DE PAGO", 70, 20);
-            doc.text("Inquilino: " + document.getElementById('nom'+id).value, 20, 40);
-            doc.text("Total a pagar: " + document.getElementById('res'+id).innerText, 20, 50);
+            let nom = document.getElementById('nom'+id).value;
+            let alq = document.getElementById('alq'+id).value;
+            let kwh = (parseFloat(document.getElementById('fin'+id).value) - parseFloat(document.getElementById('ini'+id).value));
+            let total = document.getElementById('res'+id).innerText;
+
+            doc.setFontSize(18);
+            doc.text("RECIBO DE PAGO", 105, 20, {align: "center"});
+            doc.setFontSize(12);
+            doc.text("Inquilino: " + nom, 20, 40);
+            doc.text("------------------------------------------------", 20, 45);
+            doc.text("Alquiler: " + parseInt(alq).toLocaleString('es-PY') + " Gs", 20, 55);
+            doc.text("Consumo Energía: " + kwh + " kWh", 20, 65);
+            doc.text("------------------------------------------------", 20, 75);
+            doc.setFontSize(16);
+            doc.text("TOTAL A PAGAR: " + total, 20, 90);
             doc.save("Recibo_Depto_"+id+".pdf");
         }
 
-        // ... (Funciones guardar, cargarDatosDB, enviarWpp se mantienen similares)
+        function enviarWpp(id) {
+            let nom = document.getElementById('nom'+id).value;
+            let alq = document.getElementById('alq'+id).value;
+            let ini = document.getElementById('ini'+id).value;
+            let fin = document.getElementById('fin'+id).value;
+            let tar = document.getElementById('tar'+id).value;
+            let tel = document.getElementById('tel'+id).value;
+            let total = document.getElementById('res'+id).innerText;
+            
+            let msg = `Hola ${nom}! Te envío tu resumen:\n` +
+                      `Alquiler: ${parseInt(alq).toLocaleString('es-PY')} Gs\n` +
+                      `Consumo: ${fin - ini} kWh\n` +
+                      `Total: ${total}\nEspero el pago. ¡Gracias!`;
+            
+            window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(msg));
+        }
+
         function guardar(id) {
             if(!db) return;
             const tx = db.transaction("departamentos", "readwrite");
@@ -168,7 +187,6 @@
                 };
             }
         }
-        function enviarWpp(id) { /* Igual que antes */ }
     </script>
 </body>
 </html>
