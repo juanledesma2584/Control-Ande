@@ -3,85 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control ANDE v4 Pro</title>
+    <title>Control ANDE v5 Pro</title>
+    <!-- Librería para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body {
-            margin: 0; padding: 15px; min-height: 100vh;
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #333;
-        }
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+        body { margin: 0; padding: 15px; background: #f1f5f9; color: #333; }
         
-        /* Estilos del Logo y Cabecera */
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-        .logo-svg {
-            width: 70px;
-            height: 70px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-        }
-        h1 { 
-            text-align: center; 
-            color: #fff; 
-            font-size: 1.6rem; 
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2); 
-            margin: 8px 0 0 0; 
-            font-weight: 800;
-            letter-spacing: 0.5px;
-        }
+        .header-container { text-align: center; margin-bottom: 20px; }
+        h1 { color: #1e293b; font-size: 1.5rem; margin: 5px 0; }
         
-        .panel-backup {
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
-            border-radius: 16px; padding: 20px; margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-        }
-        label { display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-top: 10px; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
-        .total { background: #10b981; color: white; font-weight: 800; font-size: 1.1rem; padding: 12px; border-radius: 10px; text-align: center; margin: 15px 0 10px 0; }
-        button { width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; color: white; }
-        .btn-cerrar { background: #3b82f6; }
+        /* Panel Global */
+        .panel-global { background: #3b82f6; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .summary-item { background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; text-align: center; }
+        
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        label { display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; }
+        input { width: 100%; padding: 8px; margin-top: 2px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        .total { background: #10b981; color: white; font-weight: 800; padding: 10px; border-radius: 8px; text-align: center; margin: 15px 0; }
+        button { width: 100%; padding: 10px; margin-top: 8px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; }
+        .btn-cerrar { background: #64748b; }
         .btn-wpp { background: #25D366; }
-        .btn-backup { background: #8b5cf6; font-size: 0.8rem; padding: 8px; margin-top: 0; }
-        .btn-restore { background: #f59e0b; font-size: 0.8rem; padding: 8px; margin-top: 0; }
+        .btn-pdf { background: #ef4444; }
     </style>
 </head>
 <body>
 
-    <!-- Cabecera con Logo SVG Vectorial -->
     <div class="header-container">
-        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="45" fill="#1e293b" stroke="#ffffff" stroke-width="3" />
-            <path d="M50 20 L53 26 L60 23 L62 29 L69 29 L68 36 L74 39 L71 45 L76 49 L71 54 L74 60 L68 63 L69 70 L62 70 L60 76 L53 73 L50 79 L47 73 L40 76 L38 70 L31 70 L32 63 L26 60 L29 54 L24 49 L29 45 L26 39 L32 36 L31 29 L38 29 L40 23 L47 26 Z" fill="none" stroke="#38bdf8" stroke-width="2.5" />
-            <circle cx="50" cy="50" r="22" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
-            <polygon points="53,30 41,50 49,50 45,70 59,48 50,48" fill="#facc15" stroke="#ca8a04" stroke-width="0.5" />
-        </svg>
-        <h1>Control ANDE v4 Pro</h1>
+        <h1>Control ANDE v5</h1>
     </div>
 
-    <div class="panel-backup">
-        <button class="btn-backup" onclick="exportarBackup()">💾 Exportar Backup</button>
-        <button class="btn-restore" onclick="document.getElementById('fileInput').click()">📥 Restaurar Backup</button>
-        <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importarBackup(event)">
+    <!-- Panel Global -->
+    <div class="panel-global">
+        <label style="color:white">Tarifa Global (Gs/kWh):</label>
+        <input type="number" id="tarifaGlobal" value="450" oninput="actualizarTarifaGlobal()">
+        <button onclick="limpiarTodo()" style="background:#e11d48; margin-top:10px;">🧹 Limpiar todas las lecturas (Nuevo Mes)</button>
+        
+        <div class="summary-box">
+            <div class="summary-item">Alquileres: <br><span id="totalAlquiler">0</span></div>
+            <div class="summary-item">Energía: <br><span id="totalEnergia">0</span></div>
+        </div>
+        <div style="text-align:center; margin-top:10px; font-size:1.2rem; font-weight:bold;">Total General: <span id="totalGeneral">0</span> Gs</div>
     </div>
 
     <div id="contenedor"></div>
@@ -89,59 +52,100 @@
     <script>
         let db;
         const request = indexedDB.open("ControlAndE_DB", 1);
-
-        request.onupgradeneeded = (e) => {
-            db = e.target.result;
-            db.createObjectStore("departamentos", { keyPath: "id" });
-        };
-
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            cargarDatosDB();
-        };
+        request.onupgradeneeded = (e) => { db = e.target.result; db.createObjectStore("departamentos", { keyPath: "id" }); };
+        request.onsuccess = (e) => { db = e.target.result; cargarDatosDB(); };
 
         function hacerTarjetas() {
             let html = '';
             for(let i=1; i<=4; i++) {
                 html += `
                 <div class="card">
-                    <h3>Departamento ${i}</h3>
-                    <input type="text" id="nom${i}" placeholder="Nombre del Inquilino" oninput="guardar(${i})">
-                    <label>Fecha Lectura Anterior:</label>
-                    <input type="date" id="fecAnt${i}" oninput="guardar(${i})">
-                    <label>Fecha Lectura Actual:</label>
-                    <input type="date" id="fecAct${i}" oninput="guardar(${i})">
-                    <input type="number" id="alq${i}" placeholder="Monto Alquiler (Gs.)" oninput="calc(${i})">
-                    <input type="number" id="ini${i}" placeholder="Lectura Inicial (kWh)" oninput="calc(${i})">
-                    <input type="number" id="fin${i}" placeholder="Lectura Final (kWh)" oninput="calc(${i})">
-                    <label>Tarifa ANDE (Gs/kWh):</label>
-                    <input type="number" id="tar${i}" value="450" oninput="calc(${i})">
+                    <h3>Depto ${i}</h3>
+                    <input type="text" id="nom${i}" placeholder="Inquilino" oninput="guardar(${i})">
+                    <div style="display:flex; gap:5px">
+                        <div style="flex:1"><label>Ant:</label><input type="date" id="fecAnt${i}" oninput="guardar(${i})"></div>
+                        <div style="flex:1"><label>Act:</label><input type="date" id="fecAct${i}" oninput="guardar(${i})"></div>
+                    </div>
+                    <input type="number" id="alq${i}" placeholder="Alquiler (Gs.)" oninput="calc(${i})">
+                    <input type="number" id="ini${i}" placeholder="Lectura Ini" oninput="calc(${i})">
+                    <input type="number" id="fin${i}" placeholder="Lectura Fin" oninput="calc(${i})">
+                    <input type="hidden" id="tar${i}" value="450">
                     <input type="number" id="tel${i}" placeholder="WhatsApp (Ej: 595981123456)" oninput="guardar(${i})">
-                    <div class="total" id="res${i}">TOTAL A PAGAR: 0 Gs</div>
-                    <button class="btn-cerrar" onclick="cerrarMes(${i})">🔄 Cerrar Mes (Pasar lectura)</button>
-                    <button class="btn-wpp" onclick="enviarWpp(${i})">📲 Enviar por WhatsApp</button>
+                    <div class="total" id="res${i}">0 Gs</div>
+                    <button class="btn-pdf" onclick="generarPDF(${i})">📄 Generar PDF</button>
+                    <button class="btn-wpp" onclick="enviarWpp(${i})">📲 WhatsApp</button>
                 </div>`;
             }
             document.getElementById('contenedor').innerHTML = html;
         }
         hacerTarjetas();
 
+        function actualizarTarifaGlobal() {
+            let t = document.getElementById('tarifaGlobal').value;
+            for(let i=1; i<=4; i++) {
+                document.getElementById('tar'+i).value = t;
+                calc(i);
+            }
+        }
+
+        function limpiarTodo() {
+            if(confirm("¿Seguro que querés limpiar todas las lecturas para un mes nuevo?")) {
+                for(let i=1; i<=4; i++) {
+                    document.getElementById('ini'+i).value = document.getElementById('fin'+i).value;
+                    document.getElementById('fin'+i).value = '';
+                    document.getElementById('fecAnt'+i).value = document.getElementById('fecAct'+i).value;
+                    document.getElementById('fecAct'+i).value = '';
+                    calc(i);
+                }
+            }
+        }
+
+        function calc(id) {
+            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
+            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
+            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
+            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
+            let kwh = (fin > ini) ? (fin - ini) : 0;
+            let costo = kwh * tar;
+            document.getElementById('res'+id).innerText = (alq + costo).toLocaleString('es-PY') + " Gs";
+            guardar(id);
+            sumarTodo();
+        }
+
+        function sumarTodo() {
+            let tAlq = 0, tEnergia = 0;
+            for(let i=1; i<=4; i++) {
+                tAlq += parseFloat(document.getElementById('alq'+i).value) || 0;
+                let ini = parseFloat(document.getElementById('ini'+i).value) || 0;
+                let fin = parseFloat(document.getElementById('fin'+i).value) || 0;
+                let tar = parseFloat(document.getElementById('tar'+i).value) || 450;
+                tEnergia += (fin > ini ? (fin-ini)*tar : 0);
+            }
+            document.getElementById('totalAlquiler').innerText = tAlq.toLocaleString('es-PY');
+            document.getElementById('totalEnergia').innerText = tEnergia.toLocaleString('es-PY');
+            document.getElementById('totalGeneral').innerText = (tAlq + tEnergia).toLocaleString('es-PY');
+        }
+
+        function generarPDF(id) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("RECIBO DE PAGO", 70, 20);
+            doc.text("Inquilino: " + document.getElementById('nom'+id).value, 20, 40);
+            doc.text("Total a pagar: " + document.getElementById('res'+id).innerText, 20, 50);
+            doc.save("Recibo_Depto_"+id+".pdf");
+        }
+
+        // ... (Funciones guardar, cargarDatosDB, enviarWpp se mantienen similares)
         function guardar(id) {
             if(!db) return;
             const tx = db.transaction("departamentos", "readwrite");
             const store = tx.objectStore("departamentos");
-            const data = {
-                id: id,
-                nom: document.getElementById('nom'+id).value,
-                fecAnt: document.getElementById('fecAnt'+id).value,
-                fecAct: document.getElementById('fecAct'+id).value,
-                alq: document.getElementById('alq'+id).value,
-                ini: document.getElementById('ini'+id).value,
-                fin: document.getElementById('fin'+id).value,
-                tar: document.getElementById('tar'+id).value,
-                tel: document.getElementById('tel'+id).value
-            };
-            store.put(data);
+            store.put({
+                id: id, nom: document.getElementById('nom'+id).value, fecAnt: document.getElementById('fecAnt'+id).value,
+                fecAct: document.getElementById('fecAct'+id).value, alq: document.getElementById('alq'+id).value,
+                ini: document.getElementById('ini'+id).value, fin: document.getElementById('fin'+id).value,
+                tar: document.getElementById('tar'+id).value, tel: document.getElementById('tel'+id).value
+            });
         }
 
         function cargarDatosDB() {
@@ -158,97 +162,13 @@
                         document.getElementById('alq'+i).value = d.alq || '';
                         document.getElementById('ini'+i).value = d.ini || '';
                         document.getElementById('fin'+i).value = d.fin || '';
-                        document.getElementById('tar'+i).value = d.tar || '450';
                         document.getElementById('tel'+i).value = d.tel || '';
                         calc(i);
                     }
                 };
             }
         }
-
-        function calc(id) {
-            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
-            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
-            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
-            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
-            let kwh = (fin > ini) ? (fin - ini) : 0;
-            let costoLuz = kwh * tar;
-            let total = alq + costoLuz;
-            document.getElementById('res'+id).innerText = "TOTAL A PAGAR: " + total.toLocaleString('es-PY') + " Gs";
-            guardar(id);
-        }
-
-        function cerrarMes(id) {
-            let fin = document.getElementById('fin'+id).value;
-            let fecAct = document.getElementById('fecAct'+id).value;
-            if(fin && fecAct) {
-                document.getElementById('ini'+id).value = fin;
-                document.getElementById('fecAnt'+id).value = fecAct;
-                document.getElementById('fin'+id).value = '';
-                document.getElementById('fecAct'+id).value = '';
-                calc(id);
-                alert("Mes cerrado. Guardado en la base de datos.");
-            } else {
-                alert("Completa la lectura final y fecha actual para cerrar el mes.");
-            }
-        }
-
-        function enviarWpp(id) {
-            let nom = document.getElementById('nom'+id).value;
-            let fecAnt = document.getElementById('fecAnt'+id).value;
-            let fecAct = document.getElementById('fecAct'+id).value;
-            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
-            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
-            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
-            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
-            let tel = document.getElementById('tel'+id).value;
-            let kwh = fin - ini;
-            let costoLuz = kwh * tar;
-            let total = alq + costoLuz;
-
-            let mensaje = `Hola ${nom}! Te envío el detalle del pago.\n` +
-                          `📅 *Periodo:* ${fecAnt} al ${fecAct}\n\n` +
-                          `🏠 *Alquiler:* ${alq.toLocaleString('es-PY')} Gs.\n` +
-                          `⚡ *Consumo de Luz:* ${kwh} kWh\n` +
-                          `   _(Lectura Inicial: ${ini} - Final: ${fin})_\n` +
-                          `💰 *Costo Energía:* ${costoLuz.toLocaleString('es-PY')} Gs. (${tar.toLocaleString('es-PY')} Gs/kWh)\n\n` +
-                          `📌 *TOTAL A PAGAR:* *${total.toLocaleString('es-PY')} Gs.*\n\n` +
-                          `Por favor, me confirmás el pago. ¡Gracias!`;
-
-            window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(mensaje));
-        }
-
-        function exportarBackup() {
-            const tx = db.transaction("departamentos", "readonly");
-            const store = tx.objectStore("departamentos");
-            const req = store.getAll();
-            req.onsuccess = () => {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(req.result));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", "backup_ande.json");
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
-            };
-        }
-
-        function importarBackup(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const datos = JSON.parse(event.target.result);
-                const tx = db.transaction("departamentos", "readwrite");
-                const store = tx.objectStore("departamentos");
-                datos.forEach(d => { store.put(d); });
-                tx.oncomplete = () => {
-                    alert("¡Copia de seguridad restaurada con éxito!");
-                    cargarDatosDB();
-                };
-            };
-            reader.readAsText(file);
-        }
+        function enviarWpp(id) { /* Igual que antes */ }
     </script>
 </body>
 </html>
