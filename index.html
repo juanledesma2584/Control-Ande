@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control ANDE v6 Pro</title>
+    <title>Control ANDE v7 Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -18,14 +18,13 @@
         input { width: 100%; padding: 8px; margin-top: 2px; border: 1px solid #cbd5e1; border-radius: 6px; }
         .total { background: #10b981; color: white; font-weight: 800; padding: 10px; border-radius: 8px; text-align: center; margin: 15px 0; }
         button { width: 100%; padding: 10px; margin-top: 8px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; }
-        .btn-cerrar { background: #64748b; }
         .btn-wpp { background: #25D366; }
         .btn-pdf { background: #ef4444; }
     </style>
 </head>
 <body>
 
-    <div class="header-container"><h1>Control ANDE v6</h1></div>
+    <div class="header-container"><h1>Control ANDE v7</h1></div>
 
     <div class="panel-global">
         <label style="color:white">Tarifa Global (Gs/kWh):</label>
@@ -58,13 +57,13 @@
                         <div style="flex:1"><label>Act:</label><input type="date" id="fecAct${i}" oninput="guardar(${i})"></div>
                     </div>
                     <input type="number" id="alq${i}" placeholder="Alquiler (Gs.)" oninput="calc(${i})">
-                    <input type="number" id="ini${i}" placeholder="Lectura Ini" oninput="calc(${i})">
-                    <input type="number" id="fin${i}" placeholder="Lectura Fin" oninput="calc(${i})">
+                    <input type="number" id="ini${i}" placeholder="Lectura Inicial" oninput="calc(${i})">
+                    <input type="number" id="fin${i}" placeholder="Lectura Final" oninput="calc(${i})">
                     <input type="hidden" id="tar${i}" value="450">
                     <input type="number" id="tel${i}" placeholder="WhatsApp (595981...)" oninput="guardar(${i})">
                     <div class="total" id="res${i}">0 Gs</div>
-                    <button class="btn-pdf" onclick="generarPDF(${i})">📄 Generar PDF</button>
-                    <button class="btn-wpp" onclick="enviarWpp(${i})">📲 WhatsApp</button>
+                    <button class="btn-pdf" onclick="generarPDF(${i})">📄 Generar Recibo PDF</button>
+                    <button class="btn-wpp" onclick="enviarWpp(${i})">📲 WhatsApp Detallado</button>
                 </div>`;
             }
             document.getElementById('contenedor').innerHTML = html;
@@ -80,7 +79,7 @@
         }
 
         function limpiarTodo() {
-            if(confirm("¿Seguro que querés limpiar las lecturas?")) {
+            if(confirm("¿Limpiar lecturas para un mes nuevo?")) {
                 for(let i=1; i<=4; i++) {
                     document.getElementById('ini'+i).value = document.getElementById('fin'+i).value;
                     document.getElementById('fin'+i).value = '';
@@ -121,36 +120,52 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let nom = document.getElementById('nom'+id).value;
-            let alq = document.getElementById('alq'+id).value;
-            let kwh = (parseFloat(document.getElementById('fin'+id).value) - parseFloat(document.getElementById('ini'+id).value));
-            let total = document.getElementById('res'+id).innerText;
+            let alq = parseInt(document.getElementById('alq'+id).value) || 0;
+            let ini = parseInt(document.getElementById('ini'+id).value) || 0;
+            let fin = parseInt(document.getElementById('fin'+id).value) || 0;
+            let tar = parseInt(document.getElementById('tar'+id).value) || 450;
+            let kwh = (fin - ini);
+            let costo = kwh * tar;
+            let total = alq + costo;
 
-            doc.setFontSize(18);
+            doc.setDrawColor(59, 130, 246);
+            doc.rect(5, 5, 200, 287); // Borde de página
+            doc.setFontSize(22);
             doc.text("RECIBO DE PAGO", 105, 20, {align: "center"});
             doc.setFontSize(12);
             doc.text("Inquilino: " + nom, 20, 40);
-            doc.text("------------------------------------------------", 20, 45);
-            doc.text("Alquiler: " + parseInt(alq).toLocaleString('es-PY') + " Gs", 20, 55);
-            doc.text("Consumo Energía: " + kwh + " kWh", 20, 65);
-            doc.text("------------------------------------------------", 20, 75);
+            doc.text("Fecha: " + new Date().toLocaleDateString(), 150, 40);
+            doc.line(20, 45, 190, 45);
+            doc.text("Concepto", 20, 55); doc.text("Monto (Gs.)", 150, 55);
+            doc.text("Alquiler:", 20, 65); doc.text(alq.toLocaleString('es-PY'), 150, 65);
+            doc.text("Consumo Energía ("+kwh+" kWh):", 20, 75); doc.text(costo.toLocaleString('es-PY'), 150, 75);
+            doc.line(20, 85, 190, 85);
             doc.setFontSize(16);
-            doc.text("TOTAL A PAGAR: " + total, 20, 90);
-            doc.save("Recibo_Depto_"+id+".pdf");
+            doc.text("TOTAL A PAGAR: " + total.toLocaleString('es-PY') + " Gs", 20, 100);
+            doc.save("Recibo_"+nom+".pdf");
         }
 
         function enviarWpp(id) {
             let nom = document.getElementById('nom'+id).value;
-            let alq = document.getElementById('alq'+id).value;
-            let ini = document.getElementById('ini'+id).value;
-            let fin = document.getElementById('fin'+id).value;
-            let tar = document.getElementById('tar'+id).value;
+            let fecAnt = document.getElementById('fecAnt'+id).value;
+            let fecAct = document.getElementById('fecAct'+id).value;
+            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
+            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
+            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
+            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
             let tel = document.getElementById('tel'+id).value;
-            let total = document.getElementById('res'+id).innerText;
-            
-            let msg = `Hola ${nom}! Te envío tu resumen:\n` +
-                      `Alquiler: ${parseInt(alq).toLocaleString('es-PY')} Gs\n` +
-                      `Consumo: ${fin - ini} kWh\n` +
-                      `Total: ${total}\nEspero el pago. ¡Gracias!`;
+            let kwh = fin - ini;
+            let costo = kwh * tar;
+            let total = alq + costo;
+
+            let msg = `Hola ${nom}! Te envío el detalle del pago.\n` +
+                      `📅 *Periodo:* ${fecAnt} al ${fecAct}\n\n` +
+                      `🏠 *Alquiler:* ${alq.toLocaleString('es-PY')} Gs.\n` +
+                      `⚡ *Consumo de Luz:* ${kwh} kWh\n` +
+                      `   _(Lectura Inicial: ${ini} - Final: ${fin})_\n` +
+                      `💰 *Costo Energía:* ${costo.toLocaleString('es-PY')} Gs. (${tar} Gs/kWh)\n\n` +
+                      `📌 *TOTAL A PAGAR:* *${total.toLocaleString('es-PY')} Gs.*\n\n` +
+                      `Por favor, me confirmás el pago. ¡Gracias!`;
             
             window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(msg));
         }
@@ -181,7 +196,9 @@
                         document.getElementById('alq'+i).value = d.alq || '';
                         document.getElementById('ini'+i).value = d.ini || '';
                         document.getElementById('fin'+i).value = d.fin || '';
+                        document.getElementById('tar'+i).value = d.tar || 450;
                         document.getElementById('tel'+i).value = d.tel || '';
+                        document.getElementById('tarifaGlobal').value = d.tar || 450;
                         calc(i);
                     }
                 };
