@@ -52,7 +52,7 @@
             border-bottom: 2px solid var(--bg-color);
         }
 
-        /* LOGO EN LA PANTALLA PRINCIPAL */
+        /* LOGO VISIBLE EN LA PANTALLA PRINCIPAL DE LA APP */
         .app-logo {
             width: 80px;
             height: 80px;
@@ -390,7 +390,6 @@
         document.getElementById('resRent').textContent = rent.toLocaleString('es-PY') + ' Gs.';
         document.getElementById('resTotal').textContent = grandTotal.toLocaleString('es-PY') + ' Gs.';
 
-        // Mostrar botón de WhatsApp al calcular
         document.getElementById('whatsappBtn').style.display = 'block';
 
         currentCalculation = {
@@ -416,9 +415,15 @@
             phone = '595' + phone.substring(1);
         }
 
+        // Mensaje actualizado con lectura inicial, final, diferencia y totales
         const message = `Hola *${currentCalculation.tenant}* 👋, aquí está tu extracto del *Departamento ${currentCalculation.dept}*:\n\n` +
-                        `🏠 *Alquiler Base:* ${currentCalculation.rent.toLocaleString('es-PY')} Gs.\n` +
-                        `⚡ *Consumo ANDE:* ${currentCalculation.kwhUsed} kWh (${currentCalculation.energyTotal.toLocaleString('es-PY')} Gs.)\n` +
+                        `📊 *Medidor Electricidad (ANDE):*\n` +
+                        `• Lectura Anterior: ${currentCalculation.prev} kWh\n` +
+                        `• Lectura Actual: ${currentCalculation.curr} kWh\n` +
+                        `• *Consumo Total:* ${currentCalculation.kwhUsed} kWh\n\n` +
+                        `💵 *Detalle de Cobro:*\n` +
+                        `🏠 Alquiler Base: ${currentCalculation.rent.toLocaleString('es-PY')} Gs.\n` +
+                        `⚡ Energía (${currentCalculation.kwhUsed} kWh x ${currentCalculation.costKwh} Gs.): ${currentCalculation.energyTotal.toLocaleString('es-PY')} Gs.\n` +
                         `-----------------------------------\n` +
                         `💰 *TOTAL A PAGAR:* *${currentCalculation.grandTotal.toLocaleString('es-PY')} Gs.*`;
 
