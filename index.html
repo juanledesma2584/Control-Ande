@@ -3,205 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control ANDE v7 Pro</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { margin: 0; padding: 15px; background: #f1f5f9; color: #333; }
-        .header-container { text-align: center; margin-bottom: 20px; }
-        h1 { color: #1e293b; font-size: 1.5rem; margin: 5px 0; }
-        .panel-global { background: #3b82f6; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .summary-item { background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; text-align: center; font-size: 0.9rem; }
-        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        label { display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-top: 8px; text-transform: uppercase; }
-        input { width: 100%; padding: 8px; margin-top: 2px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .total { background: #10b981; color: white; font-weight: 800; padding: 10px; border-radius: 8px; text-align: center; margin: 15px 0; }
-        button { width: 100%; padding: 10px; margin-top: 8px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; }
-        .btn-wpp { background: #25D366; }
-        .btn-pdf { background: #ef4444; }
-    </style>
-</head>
-<body>
+    <title>Control de Luz ANDE</title>
 
-    <div class="header-container"><h1>Control ANDE v7</h1></div>
+    <!-- ÍCONO VECTORIAL DE ENERGÍA / CONTROL ELÉCTRICO PARA PANTALLA DE INICIO -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
 
-    <div class="panel-global">
-        <label style="color:white">Tarifa Global (Gs/kWh):</label>
-        <input type="number" id="tarifaGlobal" value="450" oninput="actualizarTarifaGlobal()">
-        <button onclick="limpiarTodo()" style="background:#e11d48; margin-top:10px;">🧹 Limpiar Mes (Nuevo Mes)</button>
-        <div class="summary-box">
-            <div class="summary-item">Alquileres: <br><span id="totalAlquiler">0</span></div>
-            <div class="summary-item">Energía: <br><span id="totalEnergia">0</span></div>
-        </div>
-        <div style="text-align:center; margin-top:10px; font-size:1.2rem; font-weight:bold;">Total General: <span id="totalGeneral">0</span> Gs</div>
-    </div>
-
-    <div id="contenedor"></div>
-
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        let db;
-        const request = indexedDB.open("ControlAndE_DB", 1);
-        request.onupgradeneeded = (e) => { db = e.target.result; db.createObjectStore("departamentos", { keyPath: "id" }); };
-        request.onsuccess = (e) => { db = e.target.result; cargarDatosDB(); };
-
-        function hacerTarjetas() {
-            let html = '';
-            for(let i=1; i<=4; i++) {
-                html += `
-                <div class="card">
-                    <h3>Depto ${i}</h3>
-                    <input type="text" id="nom${i}" placeholder="Inquilino" oninput="guardar(${i})">
-                    <div style="display:flex; gap:5px">
-                        <div style="flex:1"><label>Ant:</label><input type="date" id="fecAnt${i}" oninput="guardar(${i})"></div>
-                        <div style="flex:1"><label>Act:</label><input type="date" id="fecAct${i}" oninput="guardar(${i})"></div>
-                    </div>
-                    <input type="number" id="alq${i}" placeholder="Alquiler (Gs.)" oninput="calc(${i})">
-                    <input type="number" id="ini${i}" placeholder="Lectura Inicial" oninput="calc(${i})">
-                    <input type="number" id="fin${i}" placeholder="Lectura Final" oninput="calc(${i})">
-                    <input type="hidden" id="tar${i}" value="450">
-                    <input type="number" id="tel${i}" placeholder="WhatsApp (595981...)" oninput="guardar(${i})">
-                    <div class="total" id="res${i}">0 Gs</div>
-                    <button class="btn-pdf" onclick="generarPDF(${i})">📄 Generar Recibo PDF</button>
-                    <button class="btn-wpp" onclick="enviarWpp(${i})">📲 WhatsApp Detallado</button>
-                </div>`;
-            }
-            document.getElementById('contenedor').innerHTML = html;
-        }
-        hacerTarjetas();
-
-        function actualizarTarifaGlobal() {
-            let t = document.getElementById('tarifaGlobal').value;
-            for(let i=1; i<=4; i++) {
-                document.getElementById('tar'+i).value = t;
-                calc(i);
-            }
-        }
-
-        function limpiarTodo() {
-            if(confirm("¿Limpiar lecturas para un mes nuevo?")) {
-                for(let i=1; i<=4; i++) {
-                    document.getElementById('ini'+i).value = document.getElementById('fin'+i).value;
-                    document.getElementById('fin'+i).value = '';
-                    document.getElementById('fecAnt'+i).value = document.getElementById('fecAct'+i).value;
-                    document.getElementById('fecAct'+i).value = '';
-                    calc(i);
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        andeBlue: {
+                            500: '#00529b',
+                            600: '#003e75',
+                        },
+                        electricYellow: '#ffb703'
+                    }
                 }
             }
         }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4 pb-20">
 
-        function calc(id) {
-            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
-            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
-            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
-            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
-            let kwh = (fin > ini) ? (fin - ini) : 0;
-            let costo = kwh * tar;
-            document.getElementById('res'+id).innerText = (alq + costo).toLocaleString('es-PY') + " Gs";
-            guardar(id);
-            sumarTodo();
-        }
+    <!-- ENCABEZADO CON LOGO VECTORIAL -->
+    <header class="w-full max-w-md mb-6 bg-slate-800 p-5 rounded-3xl border border-slate-700 shadow-2xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-amber-400 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-bolt-lightning"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-wide">Control ANDE</h1>
+                <p class="text-xs text-slate-400">Sistema de Iluminación & Relés</p>
+            </div>
+        </div>
+        <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+    </header>
 
-        function sumarTodo() {
-            let tAlq = 0, tEnergia = 0;
-            for(let i=1; i<=4; i++) {
-                tAlq += parseFloat(document.getElementById('alq'+i).value) || 0;
-                let ini = parseFloat(document.getElementById('ini'+i).value) || 0;
-                let fin = parseFloat(document.getElementById('fin'+i).value) || 0;
-                let tar = parseFloat(document.getElementById('tar'+i).value) || 450;
-                tEnergia += (fin > ini ? (fin-ini)*tar : 0);
-            }
-            document.getElementById('totalAlquiler').innerText = tAlq.toLocaleString('es-PY');
-            document.getElementById('totalEnergia').innerText = tEnergia.toLocaleString('es-PY');
-            document.getElementById('totalGeneral').innerText = (tAlq + tEnergia).toLocaleString('es-PY');
-        }
+    <!-- PANEL DE CONTROL PRINCIPAL -->
+    <main class="w-full max-w-md bg-slate-800/80 p-6 rounded-3xl border border-slate-700/80 shadow-2xl space-y-5 backdrop-blur-sm">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Estado de Conmutación</h2>
+            <span class="text-xs font-semibold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">Línea Activa</span>
+        </div>
 
-        function generarPDF(id) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let nom = document.getElementById('nom'+id).value;
-            let alq = parseInt(document.getElementById('alq'+id).value) || 0;
-            let ini = parseInt(document.getElementById('ini'+id).value) || 0;
-            let fin = parseInt(document.getElementById('fin'+id).value) || 0;
-            let tar = parseInt(document.getElementById('tar'+id).value) || 450;
-            let kwh = (fin - ini);
-            let costo = kwh * tar;
-            let total = alq + costo;
+        <!-- TARJETA DE INTERRUPTOR DE LUZ -->
+        <div class="p-5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-lg border border-slate-800">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white">Carga Principal</h3>
+                    <p class="text-xs text-slate-500">Relé canal 1</p>
+                </div>
+            </div>
+            <button onclick="toggleRelay(this)" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg transition-all">
+                ENCENDIDO
+            </button>
+        </div>
+    </main>
 
-            doc.setDrawColor(59, 130, 246);
-            doc.rect(5, 5, 200, 287); // Borde de página
-            doc.setFontSize(22);
-            doc.text("RECIBO DE PAGO", 105, 20, {align: "center"});
-            doc.setFontSize(12);
-            doc.text("Inquilino: " + nom, 20, 40);
-            doc.text("Fecha: " + new Date().toLocaleDateString(), 150, 40);
-            doc.line(20, 45, 190, 45);
-            doc.text("Concepto", 20, 55); doc.text("Monto (Gs.)", 150, 55);
-            doc.text("Alquiler:", 20, 65); doc.text(alq.toLocaleString('es-PY'), 150, 65);
-            doc.text("Consumo Energía ("+kwh+" kWh):", 20, 75); doc.text(costo.toLocaleString('es-PY'), 150, 75);
-            doc.line(20, 85, 190, 85);
-            doc.setFontSize(16);
-            doc.text("TOTAL A PAGAR: " + total.toLocaleString('es-PY') + " Gs", 20, 100);
-            doc.save("Recibo_"+nom+".pdf");
-        }
-
-        function enviarWpp(id) {
-            let nom = document.getElementById('nom'+id).value;
-            let fecAnt = document.getElementById('fecAnt'+id).value;
-            let fecAct = document.getElementById('fecAct'+id).value;
-            let alq = parseFloat(document.getElementById('alq'+id).value) || 0;
-            let ini = parseFloat(document.getElementById('ini'+id).value) || 0;
-            let fin = parseFloat(document.getElementById('fin'+id).value) || 0;
-            let tar = parseFloat(document.getElementById('tar'+id).value) || 450;
-            let tel = document.getElementById('tel'+id).value;
-            let kwh = fin - ini;
-            let costo = kwh * tar;
-            let total = alq + costo;
-
-            let msg = `Hola ${nom}! Te envío el detalle del pago.\n` +
-                      `📅 *Periodo:* ${fecAnt} al ${fecAct}\n\n` +
-                      `🏠 *Alquiler:* ${alq.toLocaleString('es-PY')} Gs.\n` +
-                      `⚡ *Consumo de Luz:* ${kwh} kWh\n` +
-                      `   _(Lectura Inicial: ${ini} - Final: ${fin})_\n` +
-                      `💰 *Costo Energía:* ${costo.toLocaleString('es-PY')} Gs. (${tar} Gs/kWh)\n\n` +
-                      `📌 *TOTAL A PAGAR:* *${total.toLocaleString('es-PY')} Gs.*\n\n` +
-                      `Por favor, me confirmás el pago. ¡Gracias!`;
-            
-            window.open("https://wa.me/" + tel + "?text=" + encodeURIComponent(msg));
-        }
-
-        function guardar(id) {
-            if(!db) return;
-            const tx = db.transaction("departamentos", "readwrite");
-            const store = tx.objectStore("departamentos");
-            store.put({
-                id: id, nom: document.getElementById('nom'+id).value, fecAnt: document.getElementById('fecAnt'+id).value,
-                fecAct: document.getElementById('fecAct'+id).value, alq: document.getElementById('alq'+id).value,
-                ini: document.getElementById('ini'+id).value, fin: document.getElementById('fin'+id).value,
-                tar: document.getElementById('tar'+id).value, tel: document.getElementById('tel'+id).value
-            });
-        }
-
-        function cargarDatosDB() {
-            const tx = db.transaction("departamentos", "readonly");
-            const store = tx.objectStore("departamentos");
-            for(let i=1; i<=4; i++) {
-                const req = store.get(i);
-                req.onsuccess = (e) => {
-                    const d = e.target.result;
-                    if(d) {
-                        document.getElementById('nom'+i).value = d.nom || '';
-                        document.getElementById('fecAnt'+i).value = d.fecAnt || '';
-                        document.getElementById('fecAct'+i).value = d.fecAct || '';
-                        document.getElementById('alq'+i).value = d.alq || '';
-                        document.getElementById('ini'+i).value = d.ini || '';
-                        document.getElementById('fin'+i).value = d.fin || '';
-                        document.getElementById('tar'+i).value = d.tar || 450;
-                        document.getElementById('tel'+i).value = d.tel || '';
-                        document.getElementById('tarifaGlobal').value = d.tar || 450;
-                        calc(i);
-                    }
-                };
+    <script>
+        function toggleRelay(btn) {
+            if (btn.classList.contains('bg-blue-600')) {
+                btn.className = "px-5 py-2.5 bg-slate-800 text-slate-400 rounded-xl text-xs font-bold border border-slate-700 transition-all";
+                btn.textContent = "APAGADO";
+            } else {
+                btn.className = "px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg transition-all";
+                btn.textContent = "ENCENDIDO";
             }
         }
     </script>
