@@ -7,8 +7,8 @@
 
     <!-- Configuración PWA / Iconos -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-    <link rel="apple-touch-icon" href="icons/icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon.ico">
+    <link rel="apple-touch-icon" href="favicon.ico">
     <meta name="theme-color" content="#2b5876">
 
     <style>
@@ -57,6 +57,32 @@
             font-size: 1.5rem;
         }
 
+        /* Tabs de Departamentos */
+        .dept-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .dept-btn {
+            flex: 1;
+            padding: 10px 5px;
+            background: #e0e0e0;
+            color: #555;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dept-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
@@ -69,8 +95,7 @@
         }
 
         input[type="text"],
-        input[type="number"],
-        input[type="date"] {
+        input[type="number"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -84,7 +109,7 @@
             margin-top: 15px;
         }
 
-        button {
+        button.action-btn {
             flex: 1;
             padding: 12px;
             border: none;
@@ -156,7 +181,7 @@
             font-size: 0.85rem;
             display: flex;
             justify-content: space-between;
-            align-content: center;
+            align-items: center;
         }
     </style>
 </head>
@@ -165,8 +190,16 @@
 <div class="app-container">
     <header>
         <h1>Control ANDE</h1>
-        <p style="font-size: 0.8rem; color: #666;">Cálculo de Consumo y Alquiler</p>
+        <p style="font-size: 0.8rem; color: #666;">Gestión de Alquiler y Energía por Departamento</p>
     </header>
+
+    <!-- Pestañas de Selección de Departamento -->
+    <div class="dept-tabs">
+        <button class="dept-btn active" onclick="selectDept(1)">Dpto 1</button>
+        <button class="dept-btn" onclick="selectDept(2)">Dpto 2</button>
+        <button class="dept-btn" onclick="selectDept(3)">Dpto 3</button>
+        <button class="dept-btn" onclick="selectDept(4)">Dpto 4</button>
+    </div>
 
     <form id="calcForm">
         <div class="form-group">
@@ -195,13 +228,13 @@
         </div>
 
         <div class="btn-group">
-            <button type="button" class="btn-calc" onclick="calculate()">Calcular</button>
-            <button type="button" class="btn-save" onclick="saveRecord()">Guardar</button>
+            <button type="button" class="action-btn btn-calc" onclick="calculate()">Calcular</button>
+            <button type="button" class="action-btn btn-save" onclick="saveRecord()">Guardar</button>
         </div>
     </form>
 
     <div class="results-panel" id="resultsPanel">
-        <h3>Resumen del Período</h3>
+        <h3>Resumen - <span id="currentDeptTitle">Departamento 1</span></h3>
         <div class="result-row">
             <span>Consumo Total:</span>
             <span id="resKwh">0 kWh</span>
@@ -221,16 +254,38 @@
     </div>
 
     <div class="history-section">
-        <h3>Historial Guardado</h3>
+        <h3>Historial Guardado (<span id="histDeptTitle">Dpto 1</span>)</h3>
         <ul class="history-list" id="historyList"></ul>
         <div class="btn-group" style="margin-top: 10px;">
-            <button type="button" class="btn-reset" onclick="clearHistory()">Borrar Historial</button>
+            <button type="button" class="action-btn btn-reset" onclick="clearHistory()">Borrar Historial Dpto</button>
         </div>
     </div>
 </div>
 
 <script>
+    let activeDept = 1;
     let currentCalculation = null;
+
+    function selectDept(deptNum) {
+        activeDept = deptNum;
+        
+        // Cambiar clases activas en los botones de pestaña
+        const buttons = document.querySelectorAll('.dept-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx + 1 === deptNum) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        document.getElementById('currentDeptTitle').textContent = `Departamento ${deptNum}`;
+        document.getElementById('histDeptTitle').textContent = `Dpto ${deptNum}`;
+
+        // Cargar los últimos datos guardados de este departamento si existen
+        loadDeptData();
+        renderHistory();
+    }
 
     function calculate() {
         const tenant = document.getElementById('tenant').value || 'Sin Nombre';
@@ -254,11 +309,15 @@
         document.getElementById('resTotal').textContent = grandTotal.toLocaleString('es-PY') + ' Gs.';
 
         currentCalculation = {
+            dept: activeDept,
             date: new Date().toLocaleDateString('es-PY'),
             tenant,
+            rent,
+            prev,
+            curr,
+            costKwh,
             kwhUsed: kwhUsed.toFixed(1),
             energyTotal,
-            rent,
             grandTotal
         };
     }
@@ -269,20 +328,52 @@
             return;
         }
 
-        let history = JSON.parse(localStorage.getItem('ande_control_history')) || [];
+        const key = `ande_control_dept_${activeDept}`;
+        let history = JSON.parse(localStorage.getItem(key)) || [];
         history.push(currentCalculation);
-        localStorage.setItem('ande_control_history', JSON.stringify(history));
+        localStorage.setItem(key, JSON.stringify(history));
+
+        // Guardar última lectura como referencia
+        localStorage.setItem(`ande_last_state_${activeDept}`, JSON.stringify(currentCalculation));
 
         renderHistory();
-        alert('Registro guardado localmente.');
+        alert(`Registro del Departamento ${activeDept} guardado con éxito.`);
+    }
+
+    function loadDeptData() {
+        const lastState = JSON.parse(localStorage.getItem(`ande_last_state_${activeDept}`));
+        if (lastState) {
+            document.getElementById('tenant').value = lastState.tenant || '';
+            document.getElementById('rentAmount').value = lastState.rent || '';
+            document.getElementById('prevReading').value = lastState.curr || ''; // La lectura actual pasa a ser la anterior
+            document.getElementById('currReading').value = '';
+        } else {
+            document.getElementById('tenant').value = '';
+            document.getElementById('rentAmount').value = '';
+            document.getElementById('prevReading').value = '';
+            document.getElementById('currReading').value = '';
+        }
+        
+        // Resetear vista del resultado actual
+        document.getElementById('resKwh').textContent = '0 kWh';
+        document.getElementById('resEnergyCost').textContent = '0 Gs.';
+        document.getElementById('resRent').textContent = '0 Gs.';
+        document.getElementById('resTotal').textContent = '0 Gs.';
+        currentCalculation = null;
     }
 
     function renderHistory() {
         const historyList = document.getElementById('historyList');
         historyList.innerHTML = '';
-        let history = JSON.parse(localStorage.getItem('ande_control_history')) || [];
+        const key = `ande_control_dept_${activeDept}`;
+        let history = JSON.parse(localStorage.getItem(key)) || [];
 
-        history.forEach((item, index) => {
+        if (history.length === 0) {
+            historyList.innerHTML = '<li style="text-align:center; color:#999; padding:10px;">Sin registros</li>';
+            return;
+        }
+
+        history.forEach((item) => {
             const li = document.createElement('li');
             li.className = 'history-item';
             li.innerHTML = `
@@ -299,18 +390,16 @@
     }
 
     function clearHistory() {
-        if (confirm('¿Estás seguro de borrar todos los registros guardados?')) {
-            localStorage.removeItem('ande_control_history');
+        if (confirm(`¿Estás seguro de borrar el historial del Departamento ${activeDept}?`)) {
+            localStorage.removeItem(`ande_control_dept_${activeDept}`);
+            localStorage.removeItem(`ande_last_state_${activeDept}`);
+            loadDeptData();
             renderHistory();
         }
     }
 
-    // Cargar historial persistente al iniciar la app
     window.onload = function() {
-        renderHistory();
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
-        }
+        selectDept(1);
     };
 </script>
 
