@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Alquiler y Energía ANDE</title>
+    <title>Control ANDE</title>
 
     <!-- Configuración PWA / Iconos -->
     <link rel="manifest" href="manifest.json">
@@ -52,12 +52,22 @@
             border-bottom: 2px solid var(--bg-color);
         }
 
+        /* Estilo del Logo en la App */
+        .app-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
         header h1 {
             color: var(--primary-color);
             font-size: 1.5rem;
         }
 
-        /* Tabs de Departamentos */
+        /* Pestañas de Departamentos */
         .dept-tabs {
             display: flex;
             gap: 5px;
@@ -95,12 +105,33 @@
         }
 
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        input[type="tel"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 1rem;
+        }
+
+        .tariff-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tariff-box input {
+            flex: 1;
+        }
+
+        .btn-edit-tariff {
+            padding: 10px 15px;
+            background: #ffc107;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
         }
 
         .btn-group {
@@ -128,6 +159,14 @@
         .btn-save {
             background-color: #28a745;
             color: white;
+        }
+
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+            display: none; /* Aparece al calcular */
         }
 
         .btn-reset {
@@ -189,11 +228,13 @@
 
 <div class="app-container">
     <header>
+        <!-- Logo visual dentro de la App (Asegurate de subir el archivo favicon.ico o icon.png) -->
+        <img src="favicon.ico" alt="Logo Control ANDE" class="app-logo" onerror="this.style.display='none'">
         <h1>Control ANDE</h1>
-        <p style="font-size: 0.8rem; color: #666;">Gestión de Alquiler y Energía por Departamento</p>
+        <p style="font-size: 0.8rem; color: #666;">Alquiler y Energía por Departamento</p>
     </header>
 
-    <!-- Pestañas de Selección de Departamento -->
+    <!-- Pestañas de Departamentos (1 al 4) -->
     <div class="dept-tabs">
         <button class="dept-btn active" onclick="selectDept(1)">Dpto 1</button>
         <button class="dept-btn" onclick="selectDept(2)">Dpto 2</button>
@@ -205,6 +246,11 @@
         <div class="form-group">
             <label for="tenant">Inquilino / Nombre:</label>
             <input type="text" id="tenant" placeholder="Ej: Juan Pérez" required>
+        </div>
+
+        <div class="form-group">
+            <label for="tenantPhone">Nro. WhatsApp (Ej: 0981123456):</label>
+            <input type="tel" id="tenantPhone" placeholder="Ej: 595981123456" required>
         </div>
 
         <div class="form-group">
@@ -223,8 +269,11 @@
         </div>
 
         <div class="form-group">
-            <label for="costPerKwh">Costo kWh ANDE (Gs.):</label>
-            <input type="number" id="costPerKwh" value="440" required>
+            <label for="costPerKwh">Costo kWh ANDE (Modificable):</label>
+            <div class="tariff-box">
+                <input type="number" id="costPerKwh" value="440" disabled>
+                <button type="button" class="btn-edit-tariff" onclick="toggleTariffEdit()" id="editTariffBtn">Editar</button>
+            </div>
         </div>
 
         <div class="btn-group">
@@ -251,6 +300,9 @@
             <span>Total a Pagar:</span>
             <span id="resTotal">0 Gs.</span>
         </div>
+
+        <!-- Botón directo de WhatsApp para enviar el extracto -->
+        <button type="button" class="action-btn btn-whatsapp" id="whatsappBtn" onclick="sendWhatsApp()">📱 Enviar Extracto por WhatsApp</button>
     </div>
 
     <div class="history-section">
@@ -269,7 +321,6 @@
     function selectDept(deptNum) {
         activeDept = deptNum;
         
-        // Cambiar clases activas en los botones de pestaña
         const buttons = document.querySelectorAll('.dept-btn');
         buttons.forEach((btn, idx) => {
             if (idx + 1 === deptNum) {
@@ -282,17 +333,35 @@
         document.getElementById('currentDeptTitle').textContent = `Departamento ${deptNum}`;
         document.getElementById('histDeptTitle').textContent = `Dpto ${deptNum}`;
 
-        // Cargar los últimos datos guardados de este departamento si existen
         loadDeptData();
         renderHistory();
     }
 
+    function toggleTariffEdit() {
+        const input = document.getElementById('costPerKwh');
+        const btn = document.getElementById('editTariffBtn');
+        if (input.disabled) {
+            input.disabled = false;
+            input.focus();
+            btn.textContent = 'Bloquear';
+            btn.style.background = '#28a745';
+            btn.style.color = '#fff';
+        } else {
+            input.disabled = true;
+            btn.textContent = 'Editar';
+            btn.style.background = '#ffc107';
+            btn.style.color = '#333';
+            localStorage.setItem('ande_tariff_kwh', input.value);
+        }
+    }
+
     function calculate() {
-        const tenant = document.getElementById('tenant').value || 'Sin Nombre';
+        const tenant = document.getElementById('tenant').value || 'Inquilino';
+        const phone = document.getElementById('tenantPhone').value || '';
         const rent = parseFloat(document.getElementById('rentAmount').value) || 0;
         const prev = parseFloat(document.getElementById('prevReading').value) || 0;
         const curr = parseFloat(document.getElementById('currReading').value) || 0;
-        const costKwh = parseFloat(document.getElementById('costPerKwh').value) || 0;
+        const costKwh = parseFloat(document.getElementById('costPerKwh').value) || 440;
 
         if (curr < prev) {
             alert('La lectura actual no puede ser menor a la lectura anterior.');
@@ -308,10 +377,13 @@
         document.getElementById('resRent').textContent = rent.toLocaleString('es-PY') + ' Gs.';
         document.getElementById('resTotal').textContent = grandTotal.toLocaleString('es-PY') + ' Gs.';
 
+        document.getElementById('whatsappBtn').style.display = 'block';
+
         currentCalculation = {
             dept: activeDept,
             date: new Date().toLocaleDateString('es-PY'),
             tenant,
+            phone,
             rent,
             prev,
             curr,
@@ -320,6 +392,25 @@
             energyTotal,
             grandTotal
         };
+    }
+
+    function sendWhatsApp() {
+        if (!currentCalculation) return;
+        
+        let phone = currentCalculation.phone.trim();
+        if (phone.startsWith('0')) {
+            phone = '595' + phone.substring(1);
+        }
+
+        const message = `Hola *${currentCalculation.tenant}* 👋, aquí está tu extracto del *Departamento ${currentCalculation.dept}*:\n\n` +
+                        `🏠 *Alquiler Base:* ${currentCalculation.rent.toLocaleString('es-PY')} Gs.\n` +
+                        `⚡ *Consumo ANDE:* ${currentCalculation.kwhUsed} kWh (${currentCalculation.energyTotal.toLocaleString('es-PY')} Gs.)\n` +
+                        `-----------------------------------\n` +
+                        `💰 *TOTAL A PAGAR:* *${currentCalculation.grandTotal.toLocaleString('es-PY')} Gs.*`;
+
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
     }
 
     function saveRecord() {
@@ -333,7 +424,6 @@
         history.push(currentCalculation);
         localStorage.setItem(key, JSON.stringify(history));
 
-        // Guardar última lectura como referencia
         localStorage.setItem(`ande_last_state_${activeDept}`, JSON.stringify(currentCalculation));
 
         renderHistory();
@@ -341,24 +431,31 @@
     }
 
     function loadDeptData() {
+        const savedTariff = localStorage.getItem('ande_tariff_kwh');
+        if (savedTariff) {
+            document.getElementById('costPerKwh').value = savedTariff;
+        }
+
         const lastState = JSON.parse(localStorage.getItem(`ande_last_state_${activeDept}`));
         if (lastState) {
             document.getElementById('tenant').value = lastState.tenant || '';
+            document.getElementById('tenantPhone').value = lastState.phone || '';
             document.getElementById('rentAmount').value = lastState.rent || '';
-            document.getElementById('prevReading').value = lastState.curr || ''; // La lectura actual pasa a ser la anterior
+            document.getElementById('prevReading').value = lastState.curr || ''; 
             document.getElementById('currReading').value = '';
         } else {
             document.getElementById('tenant').value = '';
+            document.getElementById('tenantPhone').value = '';
             document.getElementById('rentAmount').value = '';
             document.getElementById('prevReading').value = '';
             document.getElementById('currReading').value = '';
         }
         
-        // Resetear vista del resultado actual
         document.getElementById('resKwh').textContent = '0 kWh';
         document.getElementById('resEnergyCost').textContent = '0 Gs.';
         document.getElementById('resRent').textContent = '0 Gs.';
         document.getElementById('resTotal').textContent = '0 Gs.';
+        document.getElementById('whatsappBtn').style.display = 'none';
         currentCalculation = null;
     }
 
