@@ -3,83 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Luz ANDE</title>
+    <title>Control de Alquiler y Energía ANDE</title>
 
-    <!-- ÍCONO VECTORIAL DE ENERGÍA / CONTROL ELÉCTRICO PARA PANTALLA DE INICIO -->
-    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2983/2983780.png">
+    <!-- Configuración PWA / Iconos -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-512.png">
+    <meta name="theme-color" content="#2b5876">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        andeBlue: {
-                            500: '#00529b',
-                            600: '#003e75',
-                        },
-                        electricYellow: '#ffb703'
-                    }
-                }
-            }
+    <style>
+        :root {
+            --primary-color: #2b5876;
+            --secondary-color: #4e4376;
+            --accent-color: #00d2ff;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
         }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4 pb-20">
 
-    <!-- ENCABEZADO CON LOGO VECTORIAL -->
-    <header class="w-full max-w-md mb-6 bg-slate-800 p-5 rounded-3xl border border-slate-700 shadow-2xl flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-amber-400 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
-                <i class="fa-solid fa-bolt-lightning"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold text-white tracking-wide">Control ANDE</h1>
-                <p class="text-xs text-slate-400">Sistema de Iluminación & Relés</p>
-            </div>
-        </div>
-        <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--bg-color);
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-calc {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-reset {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .results-panel {
+            margin-top: 20px;
+            background: #eef2f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .results-panel h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .result-row.total {
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+            color: var(--secondary-color);
+        }
+
+        .history-section {
+            margin-top: 25px;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-content: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>Control ANDE</h1>
+        <p style="font-size: 0.8rem; color: #666;">Cálculo de Consumo y Alquiler</p>
     </header>
 
-    <!-- PANEL DE CONTROL PRINCIPAL -->
-    <main class="w-full max-w-md bg-slate-800/80 p-6 rounded-3xl border border-slate-700/80 shadow-2xl space-y-5 backdrop-blur-sm">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Estado de Conmutación</h2>
-            <span class="text-xs font-semibold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">Línea Activa</span>
+    <form id="calcForm">
+        <div class="form-group">
+            <label for="tenant">Inquilino / Nombre:</label>
+            <input type="text" id="tenant" placeholder="Ej: Juan Pérez" required>
         </div>
 
-        <!-- TARJETA DE INTERRUPTOR DE LUZ -->
-        <div class="p-5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-lg border border-slate-800">
-                    <i class="fa-solid fa-lightbulb"></i>
+        <div class="form-group">
+            <label for="rentAmount">Monto Alquiler Base (Gs.):</label>
+            <input type="number" id="rentAmount" placeholder="Ej: 1500000" required>
+        </div>
+
+        <div class="form-group">
+            <label for="prevReading">Lectura Anterior (kWh):</label>
+            <input type="number" id="prevReading" step="0.1" placeholder="Ej: 12450.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="currReading">Lectura Actual (kWh):</label>
+            <input type="number" id="currReading" step="0.1" placeholder="Ej: 12680.0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="costPerKwh">Costo kWh ANDE (Gs.):</label>
+            <input type="number" id="costPerKwh" value="440" required>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" class="btn-calc" onclick="calculate()">Calcular</button>
+            <button type="button" class="btn-save" onclick="saveRecord()">Guardar</button>
+        </div>
+    </form>
+
+    <div class="results-panel" id="resultsPanel">
+        <h3>Resumen del Período</h3>
+        <div class="result-row">
+            <span>Consumo Total:</span>
+            <span id="resKwh">0 kWh</span>
+        </div>
+        <div class="result-row">
+            <span>Monto Energía:</span>
+            <span id="resEnergyCost">0 Gs.</span>
+        </div>
+        <div class="result-row">
+            <span>Monto Alquiler:</span>
+            <span id="resRent">0 Gs.</span>
+        </div>
+        <div class="result-row total">
+            <span>Total a Pagar:</span>
+            <span id="resTotal">0 Gs.</span>
+        </div>
+    </div>
+
+    <div class="history-section">
+        <h3>Historial Guardado</h3>
+        <ul class="history-list" id="historyList"></ul>
+        <div class="btn-group" style="margin-top: 10px;">
+            <button type="button" class="btn-reset" onclick="clearHistory()">Borrar Historial</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCalculation = null;
+
+    function calculate() {
+        const tenant = document.getElementById('tenant').value || 'Sin Nombre';
+        const rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+        const prev = parseFloat(document.getElementById('prevReading').value) || 0;
+        const curr = parseFloat(document.getElementById('currReading').value) || 0;
+        const costKwh = parseFloat(document.getElementById('costPerKwh').value) || 0;
+
+        if (curr < prev) {
+            alert('La lectura actual no puede ser menor a la lectura anterior.');
+            return;
+        }
+
+        const kwhUsed = curr - prev;
+        const energyTotal = kwhUsed * costKwh;
+        const grandTotal = rent + energyTotal;
+
+        document.getElementById('resKwh').textContent = kwhUsed.toFixed(1) + ' kWh';
+        document.getElementById('resEnergyCost').textContent = energyTotal.toLocaleString('es-PY') + ' Gs.';
+        document.getElementById('resRent').textContent = rent.toLocaleString('es-PY') + ' Gs.';
+        document.getElementById('resTotal').textContent = grandTotal.toLocaleString('es-PY') + ' Gs.';
+
+        currentCalculation = {
+            date: new Date().toLocaleDateString('es-PY'),
+            tenant,
+            kwhUsed: kwhUsed.toFixed(1),
+            energyTotal,
+            rent,
+            grandTotal
+        };
+    }
+
+    function saveRecord() {
+        if (!currentCalculation) {
+            alert('Realizá un cálculo antes de guardar.');
+            return;
+        }
+
+        let history = JSON.parse(localStorage.getItem('ande_control_history')) || [];
+        history.push(currentCalculation);
+        localStorage.setItem('ande_control_history', JSON.stringify(history));
+
+        renderHistory();
+        alert('Registro guardado localmente.');
+    }
+
+    function renderHistory() {
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+        let history = JSON.parse(localStorage.getItem('ande_control_history')) || [];
+
+        history.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'history-item';
+            li.innerHTML = `
+                <div>
+                    <strong>${item.tenant}</strong> (${item.date})<br>
+                    Consumo: ${item.kwhUsed} kWh
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-white">Carga Principal</h3>
-                    <p class="text-xs text-slate-500">Relé canal 1</p>
+                    <strong>${item.grandTotal.toLocaleString('es-PY')} Gs.</strong>
                 </div>
-            </div>
-            <button onclick="toggleRelay(this)" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg transition-all">
-                ENCENDIDO
-            </button>
-        </div>
-    </main>
+            `;
+            historyList.appendChild(li);
+        });
+    }
 
-    <script>
-        function toggleRelay(btn) {
-            if (btn.classList.contains('bg-blue-600')) {
-                btn.className = "px-5 py-2.5 bg-slate-800 text-slate-400 rounded-xl text-xs font-bold border border-slate-700 transition-all";
-                btn.textContent = "APAGADO";
-            } else {
-                btn.className = "px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg transition-all";
-                btn.textContent = "ENCENDIDO";
-            }
+    function clearHistory() {
+        if (confirm('¿Estás seguro de borrar todos los registros guardados?')) {
+            localStorage.removeItem('ande_control_history');
+            renderHistory();
         }
-    </script>
+    }
+
+    // Cargar historial persistente al iniciar la app
+    window.onload = function() {
+        renderHistory();
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
+        }
+    };
+</script>
+
 </body>
 </html>
