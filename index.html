@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control ANDE</title>
 
-    <!-- Configuración PWA y Manifest para la pantalla de inicio -->
+    <!-- Configuración PWA y Manifest -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="favicon.ico">
-    <link rel="apple-touch-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <meta name="theme-color" content="#2b5876">
 
     <style>
@@ -52,7 +52,6 @@
             border-bottom: 2px solid var(--bg-color);
         }
 
-        /* LOGO VISIBLE EN LA PANTALLA PRINCIPAL DE LA APP */
         .app-logo {
             width: 80px;
             height: 80px;
@@ -68,7 +67,6 @@
             font-size: 1.5rem;
         }
 
-        /* Pestañas de Departamentos (1 al 4) */
         .dept-tabs {
             display: flex;
             gap: 5px;
@@ -162,7 +160,6 @@
             color: white;
         }
 
-        /* BOTÓN DE WHATSAPP */
         .btn-whatsapp {
             background-color: #25D366;
             color: white;
@@ -174,7 +171,7 @@
             font-weight: bold;
             font-size: 1rem;
             cursor: pointer;
-            display: none; /* Se muestra solo al calcular */
+            display: none;
             box-shadow: 0 3px 8px rgba(37, 211, 102, 0.3);
         }
 
@@ -241,13 +238,11 @@
 
 <div class="app-container">
     <header>
-        <!-- LOGO VISIBLE EN LA PANTALLA PRINCIPAL -->
-        <img src="favicon.ico" alt="Logo Control ANDE" class="app-logo" onerror="this.style.display='none'">
+        <img src="logo.png" alt="Logo Control ANDE" class="app-logo" onerror="this.style.display='none'">
         <h1>Control ANDE</h1>
         <p style="font-size: 0.8rem; color: #666;">Alquiler y Energía por Departamento</p>
     </header>
 
-    <!-- Pestañas de Departamentos (1 al 4) -->
     <div class="dept-tabs">
         <button class="dept-btn active" onclick="selectDept(1)">Dpto 1</button>
         <button class="dept-btn" onclick="selectDept(2)">Dpto 2</button>
@@ -314,7 +309,6 @@
             <span id="resTotal">0 Gs.</span>
         </div>
 
-        <!-- BOTÓN DE WHATSAPP INTEGRADO -->
         <button type="button" class="btn-whatsapp" id="whatsappBtn" onclick="sendWhatsApp()">💬 Enviar Extracto por WhatsApp</button>
     </div>
 
@@ -415,7 +409,6 @@
             phone = '595' + phone.substring(1);
         }
 
-        // Mensaje actualizado con lectura inicial, final, diferencia y totales
         const message = `Hola *${currentCalculation.tenant}* 👋, aquí está tu extracto del *Departamento ${currentCalculation.dept}*:\n\n` +
                         `📊 *Medidor Electricidad (ANDE):*\n` +
                         `• Lectura Anterior: ${currentCalculation.prev} kWh\n` +
