@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control ANDE & Marangatu</title>
+    <title>Control ANDE</title>
 
     <!-- Configuración PWA y Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -67,56 +67,6 @@
             font-size: 1.5rem;
         }
 
-        /* Pantalla de Menú Principal */
-        .menu-screen {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .menu-btn {
-            padding: 20px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            color: white;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-
-        .menu-btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-ande {
-            background: linear-gradient(to right, #2b5876, #4e4376);
-        }
-
-        .btn-marangatu {
-            background: linear-gradient(to right, #134e5e, #71b280);
-        }
-
-        .btn-back {
-            background-color: #6c757d;
-            color: white;
-            margin-bottom: 15px;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        /* Ocultar secciones */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Estilos del Módulo ANDE */
         .dept-tabs {
             display: flex;
             gap: 5px;
@@ -133,6 +83,7 @@
             font-weight: bold;
             font-size: 0.85rem;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         .dept-btn.active {
@@ -154,9 +105,7 @@
 
         input[type="text"],
         input[type="number"],
-        input[type="tel"],
-        input[type="date"],
-        select {
+        input[type="tel"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -198,6 +147,7 @@
             font-weight: bold;
             font-size: 1rem;
             cursor: pointer;
+            transition: background 0.3s;
         }
 
         .btn-calc {
@@ -222,6 +172,11 @@
             font-size: 1rem;
             cursor: pointer;
             display: none;
+            box-shadow: 0 3px 8px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp:hover {
+            background-color: #1ebe57;
         }
 
         .btn-reset {
@@ -277,15 +232,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        /* Estilos del Módulo Marangatu */
-        .tax-summary {
-            background: #e8f4f8;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
@@ -293,214 +239,107 @@
 <div class="app-container">
     <header>
         <img src="logo.png" alt="Logo Control ANDE" class="app-logo" onerror="this.style.display='none'">
-        <h1 id="appTitle">Control ANDE & Marangatu</h1>
-        <p id="appSubtitle" style="font-size: 0.8rem; color: #666;">Seleccione el módulo de gestión</p>
+        <h1>Control ANDE</h1>
+        <p style="font-size: 0.8rem; color: #666;">Alquiler y Energía por Departamento</p>
     </header>
 
-    <!-- ================= PANTALLA DE MENÚ PRINCIPAL ================= -->
-    <div id="mainMenu" class="menu-screen">
-        <button class="menu-btn btn-ande" onclick="showModule('ande')">
-            🏢 Control ANDE (Alquileres y Medidores)
-        </button>
-        <button class="menu-btn btn-marangatu" onclick="showModule('marangatu')">
-            📊 Control Marangatu (IVA / IRP)
-        </button>
+    <div class="dept-tabs">
+        <button class="dept-btn active" onclick="selectDept(1)">Dpto 1</button>
+        <button class="dept-btn" onclick="selectDept(2)">Dpto 2</button>
+        <button class="dept-btn" onclick="selectDept(3)">Dpto 3</button>
+        <button class="dept-btn" onclick="selectDept(4)">Dpto 4</button>
     </div>
 
-    <!-- ================= MÓDULO 1: CONTROL ANDE ================= -->
-    <div id="moduleAnde" class="hidden">
-        <button class="btn-back" onclick="showMainMenu()">⬅️ Volver al Menú</button>
-
-        <div class="dept-tabs">
-            <button class="dept-btn active" onclick="selectDept(1)">Dpto 1</button>
-            <button class="dept-btn" onclick="selectDept(2)">Dpto 2</button>
-            <button class="dept-btn" onclick="selectDept(3)">Dpto 3</button>
-            <button class="dept-btn" onclick="selectDept(4)">Dpto 4</button>
+    <form id="calcForm">
+        <div class="form-group">
+            <label for="tenant">Inquilino / Nombre:</label>
+            <input type="text" id="tenant" placeholder="Ej: Juan Pérez" required>
         </div>
 
-        <form id="calcForm">
-            <div class="form-group">
-                <label for="tenant">Inquilino / Nombre:</label>
-                <input type="text" id="tenant" placeholder="Ej: Juan Pérez" required>
-            </div>
-
-            <div class="form-group">
-                <label for="tenantPhone">Nro. WhatsApp (Ej: 0981123456):</label>
-                <input type="tel" id="tenantPhone" placeholder="Ej: 595981123456" required>
-            </div>
-
-            <div class="form-group">
-                <label for="rentAmount">Monto Alquiler Base (Gs.):</label>
-                <input type="number" id="rentAmount" placeholder="Ej: 1500000" required>
-            </div>
-
-            <div class="form-group">
-                <label for="prevReading">Lectura Anterior (kWh):</label>
-                <input type="number" id="prevReading" step="0.1" placeholder="Ej: 12450.5" required>
-            </div>
-
-            <div class="form-group">
-                <label for="currReading">Lectura Actual (kWh):</label>
-                <input type="number" id="currReading" step="0.1" placeholder="Ej: 12680.0" required>
-            </div>
-
-            <div class="form-group">
-                <label for="costPerKwh">Costo kWh ANDE (Modificable):</label>
-                <div class="tariff-box">
-                    <input type="number" id="costPerKwh" value="440" disabled>
-                    <button type="button" class="btn-edit-tariff" onclick="toggleTariffEdit()" id="editTariffBtn">Editar</button>
-                </div>
-            </div>
-
-            <div class="btn-group">
-                <button type="button" class="action-btn btn-calc" onclick="calculate()">Calcular</button>
-                <button type="button" class="action-btn btn-save" onclick="saveRecord()">Guardar</button>
-            </div>
-        </form>
-
-        <div class="results-panel" id="resultsPanel">
-            <h3>Resumen - <span id="currentDeptTitle">Departamento 1</span></h3>
-            <div class="result-row">
-                <span>Consumo Total:</span>
-                <span id="resKwh">0 kWh</span>
-            </div>
-            <div class="result-row">
-                <span>Monto Energía:</span>
-                <span id="resEnergyCost">0 Gs.</span>
-            </div>
-            <div class="result-row">
-                <span>Monto Alquiler:</span>
-                <span id="resRent">0 Gs.</span>
-            </div>
-            <div class="result-row total">
-                <span>Total a Pagar:</span>
-                <span id="resTotal">0 Gs.</span>
-            </div>
-
-            <button type="button" class="btn-whatsapp" id="whatsappBtn" onclick="sendWhatsApp()">💬 Enviar Extracto por WhatsApp</button>
+        <div class="form-group">
+            <label for="tenantPhone">Nro. WhatsApp (Ej: 0981123456):</label>
+            <input type="tel" id="tenantPhone" placeholder="Ej: 595981123456" required>
         </div>
 
-        <div class="history-section">
-            <h3>Historial Guardado (<span id="histDeptTitle">Dpto 1</span>)</h3>
-            <ul class="history-list" id="historyList"></ul>
-            <div class="btn-group" style="margin-top: 10px;">
-                <button type="button" class="action-btn btn-reset" onclick="clearHistory()">Borrar Historial Dpto</button>
+        <div class="form-group">
+            <label for="rentAmount">Monto Alquiler Base (Gs.):</label>
+            <input type="number" id="rentAmount" placeholder="Ej: 1500000" required>
+        </div>
+
+        <div class="form-group">
+            <label for="prevReading">Lectura Anterior (kWh):</label>
+            <input type="number" id="prevReading" step="0.1" placeholder="Ej: 12450.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="currReading">Lectura Actual (kWh):</label>
+            <input type="number" id="currReading" step="0.1" placeholder="Ej: 12680.0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="costPerKwh">Costo kWh ANDE (Modificable):</label>
+            <div class="tariff-box">
+                <input type="number" id="costPerKwh" value="440" disabled>
+                <button type="button" class="btn-edit-tariff" onclick="toggleTariffEdit()" id="editTariffBtn">Editar</button>
             </div>
         </div>
+
+        <div class="btn-group">
+            <button type="button" class="action-btn btn-calc" onclick="calculate()">Calcular</button>
+            <button type="button" class="action-btn btn-save" onclick="saveRecord()">Guardar</button>
+        </div>
+    </form>
+
+    <div class="results-panel" id="resultsPanel">
+        <h3>Resumen - <span id="currentDeptTitle">Departamento 1</span></h3>
+        <div class="result-row">
+            <span>Consumo Total:</span>
+            <span id="resKwh">0 kWh</span>
+        </div>
+        <div class="result-row">
+            <span>Monto Energía:</span>
+            <span id="resEnergyCost">0 Gs.</span>
+        </div>
+        <div class="result-row">
+            <span>Monto Alquiler:</span>
+            <span id="resRent">0 Gs.</span>
+        </div>
+        <div class="result-row total">
+            <span>Total a Pagar:</span>
+            <span id="resTotal">0 Gs.</span>
+        </div>
+
+        <button type="button" class="btn-whatsapp" id="whatsappBtn" onclick="sendWhatsApp()">💬 Enviar Extracto por WhatsApp</button>
     </div>
 
-    <!-- ================= MÓDULO 2: CONTROL MARANGATU (IVA / IRP) ================= -->
-    <div id="moduleMarangatu" class="hidden">
-        <button class="btn-back" onclick="showMainMenu()">⬅️ Volver al Menú</button>
-
-        <div class="tax-summary">
-            <h3>📊 Resumen Tributario</h3>
-            <div class="result-row"><span>Total IVA Débito (Ventas):</span> <span id="sumDebito">0 Gs.</span></div>
-            <div class="result-row"><span>Total IVA Crédito (Compras):</span> <span id="sumCredito">0 Gs.</span></div>
-            <div class="result-row total"><span>Balance IVA:</span> <span id="balanceIva">0 Gs.</span></div>
-        </div>
-
-        <form id="taxForm">
-            <div class="form-group">
-                <label for="taxType">Tipo de Factura:</label>
-                <select id="taxType">
-                    <option value="EMITIDA">Emitida (Venta / Ingreso)</option>
-                    <option value="RECIBIDA">Recibida (Compra / Gasto)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="taxDate">Fecha:</label>
-                <input type="date" id="taxDate" required>
-            </div>
-
-            <div class="form-group">
-                <label for="taxRuc">RUC / Cédula y Nombre:</label>
-                <input type="text" id="taxRuc" placeholder="Ej: 1234567-8 - Proveedor S.A." required>
-            </div>
-
-            <div class="form-group">
-                <label for="taxInvoiceNum">Nro. Factura / Timbrado:</label>
-                <input type="text" id="taxInvoiceNum" placeholder="001-001-0001234" required>
-            </div>
-
-            <div class="form-group">
-                <label for="taxAmount">Monto Total Gs. (IVA Incluido):</label>
-                <input type="number" id="taxAmount" placeholder="Ej: 1100000" required>
-            </div>
-
-            <div class="form-group">
-                <label for="taxRate">Tasa de IVA:</label>
-                <select id="taxRate">
-                    <option value="10">IVA 10%</option>
-                    <option value="5">IVA 5%</option>
-                    <option value="0">Exenta</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="taxIsIrp"> Deducible para IRP
-                </label>
-            </div>
-
-            <div class="btn-group">
-                <button type="button" class="action-btn btn-save" onclick="saveTaxRecord()">Guardar Factura</button>
-            </div>
-        </form>
-
-        <div class="history-section">
-            <h3>Registro de Facturas</h3>
-            <ul class="history-list" id="taxHistoryList"></ul>
-            <div class="btn-group" style="margin-top: 10px;">
-                <button type="button" class="action-btn btn-calc" onclick="exportToExcel()">📥 Exportar para Excel (CSV)</button>
-                <button type="button" class="action-btn btn-reset" onclick="clearTaxHistory()">Borrar Todo</button>
-            </div>
+    <div class="history-section">
+        <h3>Historial Guardado (<span id="histDeptTitle">Dpto 1</span>)</h3>
+        <ul class="history-list" id="historyList"></ul>
+        <div class="btn-group" style="margin-top: 10px;">
+            <button type="button" class="action-btn btn-reset" onclick="clearHistory()">Borrar Historial Dpto</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- NAVEGACIÓN ENTRE MÓDULOS ---
-    function showModule(moduleName) {
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('moduleAnde').classList.add('hidden');
-        document.getElementById('moduleMarangatu').classList.add('hidden');
-
-        if (moduleName === 'ande') {
-            document.getElementById('moduleAnde').classList.remove('hidden');
-            document.getElementById('appSubtitle').textContent = 'Control de Alquiler y Energía';
-            selectDept(1);
-        } else if (moduleName === 'marangatu') {
-            document.getElementById('moduleMarangatu').classList.remove('hidden');
-            document.getElementById('appSubtitle').textContent = 'Gestión Tributaria (IVA / IRP)';
-            // Poner fecha de hoy por defecto
-            document.getElementById('taxDate').valueAsDate = new Date();
-            renderTaxHistory();
-        }
-    }
-
-    function showMainMenu() {
-        document.getElementById('moduleAnde').classList.add('hidden');
-        document.getElementById('moduleMarangatu').classList.add('hidden');
-        document.getElementById('mainMenu').classList.remove('hidden');
-        document.getElementById('appSubtitle').textContent = 'Seleccione el módulo de gestión';
-    }
-
-    // --- LÓGICA MÓDULO ANDE ---
     let activeDept = 1;
     let currentCalculation = null;
 
     function selectDept(deptNum) {
         activeDept = deptNum;
-        const buttons = document.querySelectorAll('.dept-tabs .dept-btn');
+        
+        const buttons = document.querySelectorAll('.dept-btn');
         buttons.forEach((btn, idx) => {
-            if (idx + 1 === deptNum) btn.classList.add('active');
-            else btn.classList.remove('active');
+            if (idx + 1 === deptNum) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         });
 
         document.getElementById('currentDeptTitle').textContent = `Departamento ${deptNum}`;
         document.getElementById('histDeptTitle').textContent = `Dpto ${deptNum}`;
+
         loadDeptData();
         renderHistory();
     }
@@ -532,7 +371,7 @@
         const costKwh = parseFloat(document.getElementById('costPerKwh').value) || 440;
 
         if (curr < prev) {
-            alert('La lectura actual no puede ser menor a la anterior.');
+            alert('La lectura actual no puede ser menor a la lectura anterior.');
             return;
         }
 
@@ -544,6 +383,7 @@
         document.getElementById('resEnergyCost').textContent = energyTotal.toLocaleString('es-PY') + ' Gs.';
         document.getElementById('resRent').textContent = rent.toLocaleString('es-PY') + ' Gs.';
         document.getElementById('resTotal').textContent = grandTotal.toLocaleString('es-PY') + ' Gs.';
+
         document.getElementById('whatsappBtn').style.display = 'block';
 
         currentCalculation = {
@@ -563,8 +403,11 @@
 
     function sendWhatsApp() {
         if (!currentCalculation) return;
+        
         let phone = currentCalculation.phone.trim();
-        if (phone.startsWith('0')) phone = '595' + phone.substring(1);
+        if (phone.startsWith('0')) {
+            phone = '595' + phone.substring(1);
+        }
 
         const message = `Hola *${currentCalculation.tenant}* 👋, aquí está tu extracto del *Departamento ${currentCalculation.dept}*:\n\n` +
                         `📊 *Medidor Electricidad (ANDE):*\n` +
@@ -577,7 +420,9 @@
                         `-----------------------------------\n` +
                         `💰 *TOTAL A PAGAR:* *${currentCalculation.grandTotal.toLocaleString('es-PY')} Gs.*`;
 
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
     }
 
     function saveRecord() {
@@ -585,18 +430,23 @@
             alert('Realizá un cálculo antes de guardar.');
             return;
         }
+
         const key = `ande_control_dept_${activeDept}`;
         let history = JSON.parse(localStorage.getItem(key)) || [];
         history.push(currentCalculation);
         localStorage.setItem(key, JSON.stringify(history));
+
         localStorage.setItem(`ande_last_state_${activeDept}`, JSON.stringify(currentCalculation));
+
         renderHistory();
-        alert(`Registro del Departamento ${activeDept} guardado.`);
+        alert(`Registro del Departamento ${activeDept} guardado con éxito.`);
     }
 
     function loadDeptData() {
         const savedTariff = localStorage.getItem('ande_tariff_kwh');
-        if (savedTariff) document.getElementById('costPerKwh').value = savedTariff;
+        if (savedTariff) {
+            document.getElementById('costPerKwh').value = savedTariff;
+        }
 
         const lastState = JSON.parse(localStorage.getItem(`ande_last_state_${activeDept}`));
         if (lastState) {
@@ -612,6 +462,7 @@
             document.getElementById('prevReading').value = '';
             document.getElementById('currReading').value = '';
         }
+        
         document.getElementById('resKwh').textContent = '0 kWh';
         document.getElementById('resEnergyCost').textContent = '0 Gs.';
         document.getElementById('resRent').textContent = '0 Gs.';
@@ -623,21 +474,32 @@
     function renderHistory() {
         const historyList = document.getElementById('historyList');
         historyList.innerHTML = '';
-        const history = JSON.parse(localStorage.getItem(`ande_control_dept_${activeDept}`)) || [];
+        const key = `ande_control_dept_${activeDept}`;
+        let history = JSON.parse(localStorage.getItem(key)) || [];
+
         if (history.length === 0) {
             historyList.innerHTML = '<li style="text-align:center; color:#999; padding:10px;">Sin registros</li>';
             return;
         }
+
         history.forEach((item) => {
             const li = document.createElement('li');
             li.className = 'history-item';
-            li.innerHTML = `<div><strong>${item.tenant}</strong> (${item.date})<br>Consumo: ${item.kwhUsed} kWh</div><div><strong>${item.grandTotal.toLocaleString('es-PY')} Gs.</strong></div>`;
+            li.innerHTML = `
+                <div>
+                    <strong>${item.tenant}</strong> (${item.date})<br>
+                    Consumo: ${item.kwhUsed} kWh
+                </div>
+                <div>
+                    <strong>${item.grandTotal.toLocaleString('es-PY')} Gs.</strong>
+                </div>
+            `;
             historyList.appendChild(li);
         });
     }
 
     function clearHistory() {
-        if (confirm(`¿Borrar historial del Dpto ${activeDept}?`)) {
+        if (confirm(`¿Estás seguro de borrar el historial del Departamento ${activeDept}?`)) {
             localStorage.removeItem(`ande_control_dept_${activeDept}`);
             localStorage.removeItem(`ande_last_state_${activeDept}`);
             loadDeptData();
@@ -645,108 +507,8 @@
         }
     }
 
-    // --- LÓGICA MÓDULO MARANGATU (IVA / IRP) ---
-    function saveTaxRecord() {
-        const type = document.getElementById('taxType').value;
-        const date = document.getElementById('taxDate').value;
-        const ruc = document.getElementById('taxRuc').value;
-        const invoiceNum = document.getElementById('taxInvoiceNum').value;
-        const amount = parseFloat(document.getElementById('taxAmount').value) || 0;
-        const rate = parseInt(document.getElementById('taxRate').value) || 0;
-        const isIrp = document.getElementById('taxIsIrp').checked;
-
-        if (!date || !ruc || !invoiceNum || amount <= 0) {
-            alert('Por favor complete todos los campos obligatorios correctamente.');
-            return;
-        }
-
-        // Cálculo de IVA en Paraguay
-        let iva = 0;
-        if (rate === 10) iva = amount / 11;
-        else if (rate === 5) iva = amount / 21;
-
-        const record = { type, date, ruc, invoiceNum, amount, rate, iva, isIrp };
-
-        let taxHistory = JSON.parse(localStorage.getItem('marangatu_tax_history')) || [];
-        taxHistory.push(record);
-        localStorage.setItem('marangatu_tax_history', JSON.stringify(taxHistory));
-
-        // Limpiar formulario
-        document.getElementById('taxRuc').value = '';
-        document.getElementById('taxInvoiceNum').value = '';
-        document.getElementById('taxAmount').value = '';
-        document.getElementById('taxIsIrp').checked = false;
-
-        renderTaxHistory();
-        alert('Factura registrada con éxito.');
-    }
-
-    function renderTaxHistory() {
-        const list = document.getElementById('taxHistoryList');
-        list.innerHTML = '';
-        const taxHistory = JSON.parse(localStorage.getItem('marangatu_tax_history')) || [];
-
-        let totalDebito = 0;
-        let totalCredito = 0;
-
-        if (taxHistory.length === 0) {
-            list.innerHTML = '<li style="text-align:center; color:#999; padding:10px;">Sin facturas registradas</li>';
-        }
-
-        taxHistory.forEach((item) => {
-            if (item.type === 'EMITIDA') totalDebito += item.iva;
-            else totalCredito += item.iva;
-
-            const li = document.createElement('li');
-            li.className = 'history-item';
-            li.innerHTML = `
-                <div>
-                    <strong>[${item.type}]</strong> ${item.date} - ${item.ruc}<br>
-                    Nro: ${item.invoiceNum} | IVA (${item.rate}%): ${Math.round(item.iva).toLocaleString('es-PY')} Gs.
-                </div>
-                <div>
-                    <strong>${item.amount.toLocaleString('es-PY')} Gs.</strong>
-                </div>
-            `;
-            list.appendChild(li);
-        });
-
-        const balance = totalDebito - totalCredito;
-        document.getElementById('sumDebito').textContent = Math.round(totalDebito).toLocaleString('es-PY') + ' Gs.';
-        document.getElementById('sumCredito').textContent = Math.round(totalCredito).toLocaleString('es-PY') + ' Gs.';
-        document.getElementById('balanceIva').textContent = Math.round(balance).toLocaleString('es-PY') + ' Gs.';
-    }
-
-    function clearTaxHistory() {
-        if (confirm('¿Desea borrar todo el registro de facturas tributarias?')) {
-            localStorage.removeItem('marangatu_tax_history');
-            renderTaxHistory();
-        }
-    }
-
-    function exportToExcel() {
-        const taxHistory = JSON.parse(localStorage.getItem('marangatu_tax_history')) || [];
-        if (taxHistory.length === 0) {
-            alert('No hay datos para exportar.');
-            return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,Tipo,Fecha,RUC/Nombre,Nro Factura,Monto Total,Tasa IVA,IVA Calculado,Deducible IRP\n";
-        taxHistory.forEach(item => {
-            csvContent += `"${item.type}","${item.date}","${item.ruc}","${item.invoiceNum}",${item.amount},${item.rate},${Math.round(item.iva)},"${item.isIrp ? 'SI' : 'NO'}"\n`;
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "reporte_marangatu_iva_irp.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
     window.onload = function() {
-        showMainMenu();
+        selectDept(1);
     };
 </script>
 
